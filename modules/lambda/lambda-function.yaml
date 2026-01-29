@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  LambdaFunctionName:
+    Type: String
+  LambdaRoleArn:
+    Type: String
+
+Resources:
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-${LambdaFunctionName}'
+      Runtime: python3.9
+      Handler: index.handler
+      Role: !Ref LambdaRoleArn
+      Timeout: 30
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              print(event)
+
+Outputs:
+  LambdaArn:
+    Value: !GetAtt LambdaFunction.Arn
