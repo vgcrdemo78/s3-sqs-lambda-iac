@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  SourceQueueArn:
+    Type: String
+  LambdaArn:
+    Type: String
+
+Resources:
+  SQSToLambdaMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !Ref SourceQueueArn
+      FunctionName: !Ref LambdaArn
+      BatchSize: 10
+      Enabled: true
