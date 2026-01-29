@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 bucket with SQS notification
+
+Parameters:
+  BucketName:
+    Type: String
+  SourceQueueArn:
+    Type: String
+  SourceQueueUrl:
+    Type: String
+
+Resources:
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SourceQueueUrl
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !Ref SourceQueueArn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:s3:::${BucketName}
+
+  InputBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: QueuePolicy
+    Properties:
+      BucketName: !Ref BucketName
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:*
+            Queue: !Ref SourceQueueArn
+
+Outputs:
+  BucketName:
+    Value: !Ref InputBucket
