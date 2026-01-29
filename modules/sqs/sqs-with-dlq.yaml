@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SQS with DLQ
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  LambdaFunctionName:
+    Type: String
+
+Resources:
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${EnvironmentName}-dlq-${LambdaFunctionName}'
+
+  SourceQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${EnvironmentName}-source-${LambdaFunctionName}'
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+Outputs:
+  SourceQueueArn:
+    Value: !GetAtt SourceQueue.Arn
+
+  SourceQueueUrl:
+    Value: !Ref SourceQueue
