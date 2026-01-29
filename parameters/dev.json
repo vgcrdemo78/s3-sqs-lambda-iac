@@ -1,0 +1,5 @@
+[
+  { "ParameterKey": "EnvironmentName", "ParameterValue": "dev" },
+  { "ParameterKey": "BucketName", "ParameterValue": "my-dev-upload-bucket-123" },
+  { "ParameterKey": "LambdaFunctionName", "ParameterValue": "FileProcessor" }
+]
