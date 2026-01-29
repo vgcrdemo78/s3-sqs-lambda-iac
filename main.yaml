@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root stack - S3 → SQS → Lambda (Async)
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+
+  BucketName:
+    Type: String
+
+  LambdaFunctionName:
+    Type: String
+    Default: FileProcessor
+
+Resources:
+
+  SQSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: modules/sqs/sqs-with-dlq.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        LambdaFunctionName: !Ref LambdaFunctionName
+
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: modules/s3/s3-bucket.yaml
+      Parameters:
+        BucketName: !Ref BucketName
+        SourceQueueArn: !GetAtt SQSStack.Outputs.SourceQueueArn
+        SourceQueueUrl: !GetAtt SQSStack.Outputs.SourceQueueUrl
+
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: modules/iam/lambda-role.yaml
+      Parameters:
+        SourceQueueArn: !GetAtt SQSStack.Outputs.SourceQueueArn
+
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: modules/lambda/lambda-function.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        LambdaFunctionName: !Ref LambdaFunctionName
+        LambdaRoleArn: !GetAtt IAMStack.Outputs.LambdaRoleArn
+
+  EventMappingStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: modules/event-mapping/sqs-lambda-mapping.yaml
+      Parameters:
+        SourceQueueArn: !GetAtt SQSStack.Outputs.SourceQueueArn
+        LambdaArn: !GetAtt LambdaStack.Outputs.LambdaArn
